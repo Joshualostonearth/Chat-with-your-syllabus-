@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyllabusAI | RAG Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i data-lucide="cpu"></i>
+                <span>Syllabus<strong>AI</strong></span>
+            </div>
+        </div>
+
+        <div class="upload-box">
+            <label for="pdfUpload" class="drop-area">
+                <i data-lucide="file-up"></i>
+                <span>Upload Syllabus</span>
+                <small>PDF, DOCX up to 10MB</small>
+                <input type="file" id="pdfUpload" hidden>
+            </label>
+        </div>
+
+        <nav class="nav-menu">
+            <button class="nav-link active" data-tab="chat"><i data-lucide="message-square"></i> Chat</button>
+            <button class="nav-link" data-tab="context"><i data-lucide="search"></i> Retrieval</button>
+            <button class="nav-link" data-tab="topics"><i data-lucide="pie-chart"></i> Analysis</button>
+            <button class="nav-link" data-tab="quiz"><i data-lucide="brain-circuit"></i> Quiz Me</button>
+            <button class="nav-link" data-tab="study"><i data-lucide="calendar"></i> Study Plan</button>
+        </nav>
+
+        <div class="sidebar-stats">
+            <div class="stat-item">
+                <span class="label">Status</span>
+                <span class="value online" id="statusText">Ready</span>
+            </div>
+            <div class="stat-item">
+                <span class="label">Chunks</span>
+                <span class="value" id="chunks">0</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-nav">
+            <div class="search-bar">
+                <i data-lucide="search"></i>
+                <input type="text" placeholder="Search within document...">
+            </div>
+            <div class="user-profile">
+                <button class="icon-btn"><i data-lucide="settings"></i></button>
+                <div class="avatar">JS</div>
+            </div>
+        </header>
+
+        <div class="view-container">
+            <section id="chat" class="tab-pane active">
+                <div class="chat-wrapper">
+                    <div class="chat-history" id="chatBox">
+                        <div class="msg bot">
+                            <p>Welcome! Please upload your syllabus to begin the AI analysis.</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <div class="input-pill">
+                            <input type="text" id="userInput" placeholder="Ask a question about the course...">
+                            <button class="send-icon" onclick="sendMessage()">
+                                <i data-lucide="arrow-up"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="context" class="tab-pane">
+                <div class="card">
+                    <h2>Source Grounding</h2>
+                    <p class="subtitle">Segments retrieved for the last query</p>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Score</th>
+                                <th>Page</th>
+                                <th>Content Preview</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contextTable">
+                            <tr>
+                                <td><span class="badge">0.94</span></td>
+                                <td>12</td>
+                                <td>"The final exam accounts for 35% of the total grade..."</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script>
+    // Initialize Icons
+    lucide.createIcons();
+
+    // Tab Switching Logic
+    const tabs = document.querySelectorAll('.nav-link');
+    const panes = document.querySelectorAll('.tab-pane');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.getAttribute('data-tab');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            panes.forEach(p => p.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.getElementById(target).classList.add('active');
+        });
+    });
+</script>
+</body>
+</html>
