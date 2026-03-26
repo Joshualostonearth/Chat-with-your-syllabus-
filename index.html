@@ -4,88 +4,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SyllabusAI | RAG Explorer</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
 <div class="app-container">
+
+    <!-- ── Sidebar ────────────────────────────────────────────── -->
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <i data-lucide="cpu"></i>
-                <span>Syllabus<strong>AI</strong></span>
-            </div>
+        <div class="logo">
+            <div class="logo-icon"><i data-lucide="cpu"></i></div>
+            <span>Syllabus<strong>AI</strong></span>
         </div>
 
         <div class="upload-box">
-            <label for="pdfUpload" class="drop-area">
-                <i data-lucide="file-up"></i>
-                <span>Upload Syllabus</span>
-                <small>PDF, DOCX up to 10MB</small>
-                <input type="file" id="pdfUpload" hidden>
+            <label for="pdfUpload" class="drop-area" id="dropArea">
+                <i data-lucide="file-up" id="uploadIcon"></i>
+                <span id="uploadLabel">Upload Syllabus</span>
+                <small>PDF or DOCX · up to 10 MB</small>
+                <input type="file" id="pdfUpload" accept=".pdf,.docx" hidden>
             </label>
         </div>
 
         <nav class="nav-menu">
-            <button class="nav-link active" data-tab="chat"><i data-lucide="message-square"></i> Chat</button>
-            <button class="nav-link" data-tab="context"><i data-lucide="search"></i> Retrieval</button>
-            <button class="nav-link" data-tab="topics"><i data-lucide="pie-chart"></i> Analysis</button>
-            <button class="nav-link" data-tab="quiz"><i data-lucide="brain-circuit"></i> Quiz Me</button>
-            <button class="nav-link" data-tab="study"><i data-lucide="calendar"></i> Study Plan</button>
+            <button class="nav-link active" data-tab="chat">
+                <i data-lucide="message-square"></i><span>Chat</span>
+            </button>
+            <button class="nav-link" data-tab="context">
+                <i data-lucide="layers"></i><span>Retrieval</span>
+            </button>
+            <button class="nav-link" data-tab="topics">
+                <i data-lucide="pie-chart"></i><span>Analysis</span>
+            </button>
+            <button class="nav-link" data-tab="quiz">
+                <i data-lucide="brain-circuit"></i><span>Quiz Me</span>
+            </button>
+            <button class="nav-link" data-tab="study">
+                <i data-lucide="calendar-days"></i><span>Study Plan</span>
+            </button>
         </nav>
 
         <div class="sidebar-stats">
-            <div class="stat-item">
-                <span class="label">Status</span>
-                <span class="value online" id="statusText">Ready</span>
+            <div class="stat-row">
+                <span>Status</span>
+                <span class="pill pill--green" id="statusText">Ready</span>
             </div>
-            <div class="stat-item">
-                <span class="label">Chunks</span>
-                <span class="value" id="chunks">0</span>
+            <div class="stat-row">
+                <span>Pages</span>
+                <span class="stat-val" id="pages">—</span>
+            </div>
+            <div class="stat-row">
+                <span>Chunks</span>
+                <span class="stat-val" id="chunks">—</span>
+            </div>
+            <div class="stat-row">
+                <span>Topics</span>
+                <span class="stat-val" id="topics">—</span>
             </div>
         </div>
     </aside>
 
+    <!-- ── Main ───────────────────────────────────────────────── -->
     <main class="main-content">
+
         <header class="top-nav">
             <div class="search-bar">
                 <i data-lucide="search"></i>
-                <input type="text" placeholder="Search within document...">
+                <input type="text" id="globalSearch" placeholder="Search within document…"
+                       oninput="handleGlobalSearch(this.value)">
             </div>
-            <div class="user-profile">
-                <button class="icon-btn"><i data-lucide="settings"></i></button>
-                <div class="avatar">JS</div>
+            <div class="nav-actions">
+                <div id="apiStatus" class="api-badge api-badge--offline">
+                    <span class="api-dot"></span>API
+                </div>
+                <div class="avatar">AI</div>
             </div>
         </header>
 
         <div class="view-container">
+
+            <!-- ── Chat ───────────────────────────────────────── -->
             <section id="chat" class="tab-pane active">
                 <div class="chat-wrapper">
                     <div class="chat-history" id="chatBox">
                         <div class="msg bot">
-                            <p>Welcome! Please upload your syllabus to begin the AI analysis.</p>
+                            <div class="msg-icon"><i data-lucide="cpu"></i></div>
+                            <div class="msg-body">
+                                <p>Welcome to <strong>SyllabusAI</strong>. Upload your course syllabus to get started, then ask me anything about grading, deadlines, topics, or policies.</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="chat-input-container">
+                    <div class="chat-input-bar">
                         <div class="input-pill">
-                            <input type="text" id="userInput" placeholder="Ask a question about the course...">
-                            <button class="send-icon" onclick="sendMessage()">
+                            <input type="text" id="userInput"
+                                   placeholder="Ask a question about your course…"
+                                   onkeydown="if(event.key==='Enter') sendMessage()">
+                            <button class="send-btn" onclick="sendMessage()" id="sendBtn">
                                 <i data-lucide="arrow-up"></i>
                             </button>
                         </div>
+                        <p class="input-hint">Answers are grounded in your uploaded syllabus only.</p>
                     </div>
                 </div>
             </section>
 
+            <!-- ── Retrieval ──────────────────────────────────── -->
             <section id="context" class="tab-pane">
-                <div class="card">
+                <div class="panel-header">
                     <h2>Source Grounding</h2>
-                    <p class="subtitle">Segments retrieved for the last query</p>
-                    <table class="data-table">
+                    <p>Exact document segments retrieved for the last query</p>
+                </div>
+                <div class="card">
+                    <table class="data-table" id="contextTableWrap">
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>Score</th>
                                 <th>Page</th>
                                 <th>Content Preview</th>
@@ -93,37 +128,501 @@
                         </thead>
                         <tbody id="contextTable">
                             <tr>
-                                <td><span class="badge">0.94</span></td>
-                                <td>12</td>
-                                <td>"The final exam accounts for 35% of the total grade..."</td>
+                                <td colspan="4" class="empty-state">
+                                    <i data-lucide="search-x"></i>
+                                    <p>Ask a question in the Chat tab to see retrieved sources here.</p>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
+
+            <!-- ── Analysis / Topics ─────────────────────────── -->
+            <section id="topics" class="tab-pane">
+                <div class="panel-header">
+                    <h2>Course Analysis</h2>
+                    <p>Key topics and themes extracted from your syllabus</p>
+                </div>
+                <div id="topicsContent" class="generate-placeholder">
+                    <button class="generate-btn" onclick="loadTopics()">
+                        <i data-lucide="sparkles"></i> Extract Topics
+                    </button>
+                    <p>Click to analyse your syllabus</p>
+                </div>
+                <div id="topicsList" class="topics-grid" style="display:none"></div>
+            </section>
+
+            <!-- ── Quiz ───────────────────────────────────────── -->
+            <section id="quiz" class="tab-pane">
+                <div class="panel-header">
+                    <h2>Quiz Me</h2>
+                    <p>AI-generated questions based on your syllabus content</p>
+                </div>
+                <div id="quizContent" class="generate-placeholder">
+                    <button class="generate-btn" onclick="loadQuiz()">
+                        <i data-lucide="brain-circuit"></i> Generate Quiz
+                    </button>
+                    <p>5 questions grounded in your document</p>
+                </div>
+                <div id="quizList" class="quiz-list" style="display:none"></div>
+            </section>
+
+            <!-- ── Study Plan ─────────────────────────────────── -->
+            <section id="study" class="tab-pane">
+                <div class="panel-header">
+                    <h2>Study Plan</h2>
+                    <p>A personalised week-by-week plan based on your syllabus</p>
+                </div>
+                <div id="studyContent" class="generate-placeholder">
+                    <button class="generate-btn" onclick="loadStudyPlan()">
+                        <i data-lucide="calendar-days"></i> Build Study Plan
+                    </button>
+                    <p>Mapped to your course deadlines</p>
+                </div>
+                <div id="studyList" class="study-list" style="display:none"></div>
+            </section>
+
         </div>
     </main>
 </div>
 
+<!-- ── Toast notification ───────────────────────────────────────────────── -->
+<div id="toast" class="toast"></div>
+
 <script>
-    // Initialize Icons
+// ═══════════════════════════════════════════════════════════════════════════
+//  Config
+// ═══════════════════════════════════════════════════════════════════════════
+
+const API = "http://localhost:8000";
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Lucide icons + startup
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.addEventListener("DOMContentLoaded", () => {
     lucide.createIcons();
+    checkApiStatus();
+    setInterval(checkApiStatus, 15000);
 
-    // Tab Switching Logic
-    const tabs = document.querySelectorAll('.nav-link');
-    const panes = document.querySelectorAll('.tab-pane');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const target = tab.getAttribute('data-tab');
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            panes.forEach(p => p.classList.remove('active'));
-
-            tab.classList.add('active');
-            document.getElementById(target).classList.add('active');
-        });
+    // Enter key for chat
+    document.getElementById("userInput").addEventListener("keydown", e => {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
     });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  API health check
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function checkApiStatus() {
+    const badge = document.getElementById("apiStatus");
+    try {
+        const res  = await fetch(`${API}/status`, { signal: AbortSignal.timeout(3000) });
+        const data = await res.json();
+        badge.className = "api-badge api-badge--online";
+        badge.innerHTML = `<span class="api-dot"></span>API`;
+
+        if (data.chunk_count > 0) {
+            document.getElementById("chunks").textContent = data.chunk_count;
+            document.getElementById("pages").textContent  = data.page_count || "—";
+            document.getElementById("statusText").textContent = "Ready";
+            document.getElementById("statusText").className   = "pill pill--green";
+        }
+    } catch {
+        badge.className = "api-badge api-badge--offline";
+        badge.innerHTML = `<span class="api-dot"></span>API`;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Tab switching
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.querySelectorAll(".nav-link").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-link").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(btn.dataset.tab).classList.add("active");
+        lucide.createIcons();
+    });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  File upload → /ingest
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.getElementById("pdfUpload").addEventListener("change", async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    setUploadState("uploading");
+    const form = new FormData();
+    form.append("file", file);
+
+    try {
+        const res  = await fetch(`${API}/ingest`, { method: "POST", body: form });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Ingestion failed");
+        }
+        const data = await res.json();
+        setUploadState("done", file.name);
+
+        document.getElementById("pages").textContent  = data.pages;
+        document.getElementById("chunks").textContent = data.chunks;
+        document.getElementById("topics").textContent = data.topics;
+        document.getElementById("statusText").textContent = "Ready";
+        document.getElementById("statusText").className   = "pill pill--green";
+
+        // Reset generated tabs so they re-generate with new doc
+        resetGeneratedTabs();
+        showToast(`✅ "${file.name}" processed — ${data.chunks} chunks ready`);
+    } catch (e) {
+        setUploadState("error");
+        showToast(`❌ ${e.message}`, "error");
+    }
+});
+
+function setUploadState(state, name = "") {
+    const label = document.getElementById("uploadLabel");
+    const icon  = document.getElementById("uploadIcon");
+    const area  = document.getElementById("dropArea");
+
+    const states = {
+        uploading: { label: "Processing…", icon: "loader",    cls: "drop-area--loading" },
+        done:      { label: name || "Uploaded ✓", icon: "check-circle", cls: "drop-area--done" },
+        error:     { label: "Upload failed", icon: "x-circle", cls: "drop-area--error" },
+    };
+    const s = states[state];
+    if (!s) return;
+    label.textContent = s.label;
+    icon.setAttribute("data-lucide", s.icon);
+    area.className = `drop-area ${s.cls}`;
+    lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Chat → /chat
+// ═══════════════════════════════════════════════════════════════════════════
+
+let lastCitations = [];
+
+async function sendMessage() {
+    const input   = document.getElementById("userInput");
+    const chatBox = document.getElementById("chatBox");
+    const query   = input.value.trim();
+    if (!query) return;
+
+    input.value = "";
+    input.disabled = true;
+    document.getElementById("sendBtn").disabled = true;
+
+    // User bubble
+    appendMsg(chatBox, "user", query);
+
+    // Thinking bubble
+    const thinking = appendMsg(chatBox, "bot thinking", `
+        <div class="msg-icon"><i data-lucide="cpu"></i></div>
+        <div class="msg-body"><div class="typing-dots"><span></span><span></span><span></span></div></div>
+    `);
+    lucide.createIcons();
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const res  = await fetch(`${API}/chat`, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({ question: query }),
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Server error");
+        }
+
+        const data = await res.json();
+
+        // Replace thinking bubble
+        thinking.className = data.in_scope ? "msg bot" : "msg bot out-of-scope";
+        thinking.innerHTML = `
+            <div class="msg-icon"><i data-lucide="cpu"></i></div>
+            <div class="msg-body">
+                <p>${escHtml(data.answer)}</p>
+                ${data.citations.length ? `
+                <div class="citation-pills">
+                    ${data.citations.map(c =>
+                        `<span class="cite-pill">p.${c.page} · ${(c.score * 100).toFixed(0)}%</span>`
+                    ).join("")}
+                </div>` : ""}
+            </div>
+        `;
+
+        // Store for Retrieval tab
+        lastCitations = data.citations || [];
+        updateContextTable(lastCitations);
+
+    } catch (e) {
+        thinking.className = "msg bot error";
+        thinking.innerHTML = `
+            <div class="msg-icon"><i data-lucide="alert-circle"></i></div>
+            <div class="msg-body"><p>${escHtml(e.message)}</p></div>
+        `;
+    }
+
+    input.disabled  = false;
+    document.getElementById("sendBtn").disabled = false;
+    lucide.createIcons();
+    chatBox.scrollTop = chatBox.scrollHeight;
+    input.focus();
+}
+
+function appendMsg(container, cls, content) {
+    const div = document.createElement("div");
+    div.className = `msg ${cls}`;
+    if (content.includes("<")) div.innerHTML = content;
+    else div.innerHTML = `
+        <div class="msg-icon"><i data-lucide="${cls.includes("user") ? "user" : "cpu"}"></i></div>
+        <div class="msg-body"><p>${escHtml(content)}</p></div>
+    `;
+    container.appendChild(div);
+    return div;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Retrieval tab
+// ═══════════════════════════════════════════════════════════════════════════
+
+function updateContextTable(citations) {
+    const tbody = document.getElementById("contextTable");
+    if (!citations.length) return;
+
+    tbody.innerHTML = citations.map(c => `
+        <tr>
+            <td>${c.rank}</td>
+            <td><span class="score-badge" style="--pct:${Math.round(c.score*100)}%">${(c.score).toFixed(3)}</span></td>
+            <td>p.${c.page}</td>
+            <td class="preview-cell">${escHtml(c.preview)}</td>
+        </tr>
+    `).join("");
+    lucide.createIcons();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Analysis tab → /generate?task=topics
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function loadTopics() {
+    const placeholder = document.getElementById("topicsContent");
+    const grid        = document.getElementById("topicsList");
+    placeholder.innerHTML = `<div class="spinner"></div><p>Analysing document…</p>`;
+
+    try {
+        const res  = await fetch(`${API}/generate`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task: "topics" }),
+        });
+        const data = await res.json();
+        if (!data.in_scope) throw new Error("No syllabus loaded yet.");
+
+        const lines = data.content.split("\n").filter(l => l.trim().startsWith("•"));
+        grid.innerHTML = lines.map((line, i) => {
+            const clean = line.replace(/^•\s*/, "");
+            const [title, ...rest] = clean.split(":");
+            return `
+                <div class="topic-card" style="--i:${i}">
+                    <div class="topic-num">${String(i + 1).padStart(2, "0")}</div>
+                    <h3>${escHtml(title.trim())}</h3>
+                    <p>${escHtml(rest.join(":").trim())}</p>
+                </div>
+            `;
+        }).join("");
+
+        placeholder.style.display = "none";
+        grid.style.display = "grid";
+        lucide.createIcons();
+    } catch (e) {
+        placeholder.innerHTML = `<p class="error-text">${escHtml(e.message)}</p>
+            <button class="generate-btn" onclick="loadTopics()"><i data-lucide="refresh-cw"></i> Retry</button>`;
+        lucide.createIcons();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Quiz tab → /generate?task=quiz
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function loadQuiz() {
+    const placeholder = document.getElementById("quizContent");
+    const list        = document.getElementById("quizList");
+    placeholder.innerHTML = `<div class="spinner"></div><p>Generating questions…</p>`;
+
+    try {
+        const res  = await fetch(`${API}/generate`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task: "quiz" }),
+        });
+        const data = await res.json();
+        if (!data.in_scope) throw new Error("No syllabus loaded yet.");
+
+        const pairs = parseQA(data.content);
+        list.innerHTML = pairs.map((qa, i) => `
+            <div class="qa-card" style="--i:${i}">
+                <div class="qa-q">
+                    <span class="qa-num">Q${i + 1}</span>
+                    <p>${escHtml(qa.q)}</p>
+                </div>
+                <div class="qa-a" id="qa-reveal-${i}" style="display:none">
+                    <span class="qa-label">Answer</span>
+                    <p>${escHtml(qa.a)}</p>
+                </div>
+                <button class="reveal-btn" onclick="toggleAnswer(${i})">
+                    <i data-lucide="eye"></i> Reveal Answer
+                </button>
+            </div>
+        `).join("");
+
+        placeholder.style.display = "none";
+        list.style.display = "flex";
+        lucide.createIcons();
+    } catch (e) {
+        placeholder.innerHTML = `<p class="error-text">${escHtml(e.message)}</p>
+            <button class="generate-btn" onclick="loadQuiz()"><i data-lucide="refresh-cw"></i> Retry</button>`;
+        lucide.createIcons();
+    }
+}
+
+function toggleAnswer(i) {
+    const el  = document.getElementById(`qa-reveal-${i}`);
+    const btn = el.nextElementSibling;
+    const vis = el.style.display !== "none";
+    el.style.display = vis ? "none" : "block";
+    btn.innerHTML     = vis
+        ? `<i data-lucide="eye"></i> Reveal Answer`
+        : `<i data-lucide="eye-off"></i> Hide Answer`;
+    lucide.createIcons();
+}
+
+function parseQA(text) {
+    const pairs = [];
+    const regex = /Q\d+:\s*(.+?)\s*A\d+:\s*(.+?)(?=Q\d+:|$)/gs;
+    let m;
+    while ((m = regex.exec(text)) !== null) {
+        pairs.push({ q: m[1].trim(), a: m[2].trim() });
+    }
+    return pairs;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Study Plan tab → /generate?task=study_plan
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function loadStudyPlan() {
+    const placeholder = document.getElementById("studyContent");
+    const list        = document.getElementById("studyList");
+    placeholder.innerHTML = `<div class="spinner"></div><p>Building your study plan…</p>`;
+
+    try {
+        const res  = await fetch(`${API}/generate`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task: "study_plan" }),
+        });
+        const data = await res.json();
+        if (!data.in_scope) throw new Error("No syllabus loaded yet.");
+
+        const weeks = data.content.split("\n").filter(l => /^Week\s+\d/i.test(l.trim()));
+        list.innerHTML = weeks.map((line, i) => {
+            const [label, ...rest] = line.split(":");
+            const isExam = /exam|final|midterm/i.test(line);
+            return `
+                <div class="week-card ${isExam ? "week-card--exam" : ""}" style="--i:${i}">
+                    <div class="week-num">${escHtml(label.trim())}</div>
+                    <div class="week-content">${escHtml(rest.join(":").trim())}</div>
+                    ${isExam ? `<span class="exam-badge"><i data-lucide="alert-triangle"></i> Exam</span>` : ""}
+                </div>
+            `;
+        }).join("");
+
+        placeholder.style.display = "none";
+        list.style.display = "flex";
+        lucide.createIcons();
+    } catch (e) {
+        placeholder.innerHTML = `<p class="error-text">${escHtml(e.message)}</p>
+            <button class="generate-btn" onclick="loadStudyPlan()"><i data-lucide="refresh-cw"></i> Retry</button>`;
+        lucide.createIcons();
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Global search (searches chat history locally)
+// ═══════════════════════════════════════════════════════════════════════════
+
+function handleGlobalSearch(query) {
+    const msgs = document.querySelectorAll(".msg.bot .msg-body p");
+    msgs.forEach(p => {
+        p.innerHTML = p.textContent; // clear old highlights
+        if (!query) return;
+        const re  = new RegExp(`(${escRe(query)})`, "gi");
+        p.innerHTML = p.textContent.replace(re, `<mark>$1</mark>`);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Toast
+// ═══════════════════════════════════════════════════════════════════════════
+
+function showToast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className   = `toast toast--${type} toast--visible`;
+    setTimeout(() => t.className = "toast", 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  Helpers
+// ═══════════════════════════════════════════════════════════════════════════
+
+function escHtml(s = "") {
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function escRe(s = "") {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function resetGeneratedTabs() {
+    // Topics
+    document.getElementById("topicsContent").style.display = "flex";
+    document.getElementById("topicsContent").innerHTML = `
+        <button class="generate-btn" onclick="loadTopics()">
+            <i data-lucide="sparkles"></i> Extract Topics
+        </button><p>Click to analyse your syllabus</p>`;
+    document.getElementById("topicsList").style.display = "none";
+
+    // Quiz
+    document.getElementById("quizContent").style.display = "flex";
+    document.getElementById("quizContent").innerHTML = `
+        <button class="generate-btn" onclick="loadQuiz()">
+            <i data-lucide="brain-circuit"></i> Generate Quiz
+        </button><p>5 questions grounded in your document</p>`;
+    document.getElementById("quizList").style.display = "none";
+
+    // Study Plan
+    document.getElementById("studyContent").style.display = "flex";
+    document.getElementById("studyContent").innerHTML = `
+        <button class="generate-btn" onclick="loadStudyPlan()">
+            <i data-lucide="calendar-days"></i> Build Study Plan
+        </button><p>Mapped to your course deadlines</p>`;
+    document.getElementById("studyList").style.display = "none";
+
+    lucide.createIcons();
+}
 </script>
 </body>
 </html>

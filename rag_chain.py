@@ -13,7 +13,7 @@ Usage:
 
 import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -23,12 +23,12 @@ load_dotenv()
 
 # ── 1. Constants ────────────────────────────────────────────────────────────
 
-CHROMA_DIR      = "./chroma_db"          # Must match Phase 1
-COLLECTION_NAME = "syllabus_chunks"      # Must match Phase 1
-EMBED_MODEL     = "text-embedding-3-small"
-CHAT_MODEL      = "gpt-4o-mini"          # Swap for "gemini-pro" etc.
-TOP_K           = 4                      # Chunks to retrieve per query
-SCORE_THRESHOLD = 0.35                   # Cosine distance cutoff (lower = more similar)
+CHROMA_DIR      = "./chroma_db"                  # Must match Phase 1
+COLLECTION_NAME = "syllabus_chunks"              # Must match Phase 1
+EMBED_MODEL     = "models/text-embedding-004"    # Best Gemini embedding model
+CHAT_MODEL      = "gemini-1.5-flash"             # Fast + cheap; swap for "gemini-1.5-pro"
+TOP_K           = 4                              # Chunks to retrieve per query
+SCORE_THRESHOLD = 0.35                           # Cosine distance cutoff
 
 # ── 2. Initialise shared resources (lazy singletons) ────────────────────────
 
@@ -38,7 +38,10 @@ _llm         = None
 def get_vectorstore() -> Chroma:
     global _vectorstore
     if _vectorstore is None:
-        embeddings   = OpenAIEmbeddings(model=EMBED_MODEL)
+        embeddings   = GoogleGenerativeAIEmbeddings(
+            model=EMBED_MODEL,
+            google_api_key=os.environ["GEMINI_API_KEY"],
+        )
         _vectorstore = Chroma(
             collection_name=COLLECTION_NAME,
             embedding_function=embeddings,
@@ -47,13 +50,14 @@ def get_vectorstore() -> Chroma:
     return _vectorstore
 
 
-def get_llm() -> ChatOpenAI:
+def get_llm() -> ChatGoogleGenerativeAI:
     global _llm
     if _llm is None:
-        _llm = ChatOpenAI(
+        _llm = ChatGoogleGenerativeAI(
             model=CHAT_MODEL,
             temperature=0.2,       # Low temp → factual answers
-            max_tokens=512,
+            max_output_tokens=512,
+            google_api_key=os.environ["GEMINI_API_KEY"],
         )
     return _llm
 
